@@ -4,6 +4,9 @@ Alabama GO
 import toga
 import urllib.request
 import json
+import math
+import csv
+import os
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 
@@ -42,21 +45,62 @@ class AlabamaGO(toga.App):
 		response = urllib.request.urlopen(request)
 		data = json.load(response)
 		parts = data["loc"].split(",")
-		return [float(parts[0]), float(parts[1])]
+		return (float(parts[0]), float(parts[1]))
 	
 	def say_hello(self, widget):
-		# with httpx.Client() as client:
-		# 	response = client.get("https://jsonplaceholder.typicode.com/posts/42")
-
-		# payload = response.json()
-
 		lat, long = self.get_location()
-
+		self.get_nearby_monuments((lat, long))
 		self.main_window.info_dialog(
 			"Location",
 			f"{lat}, {long}"
 		)
 
+	def get_nearby_monuments(self, my_coord, limit=10):
+		dist_list = []
+		monument_file = os.path.join(toga.App.app.paths.app, "monuments.csv")
+		with open(monument_file, 'r') as csvfile:
+			csvreader = csv.reader(csvfile)
+			next(csvreader)
+			for row in csvreader:
+				monument_coord = (float(row[7]), float(row[8]))
+				dist = haversine_distance(my_coord, monument_coord)
+				dist_list.append({dist: row})
+			dist_list = sorted(dist_list, key=lambda x: list(x.keys())[0])
+			smallest_numbers = dist_list[:limit]
+			print(smallest_numbers)
+			return smallest_numbers
+		
+def haversine_distance(coord1, coord2):
+	"""
+	Calculate the Haversine distance between two GPS coordinates.
+
+	Parameters:
+	- coord1: Tuple of (latitude, longitude) for the first coordinate.
+	- coord2: Tuple of (latitude, longitude) for the second coordinate.
+
+	Returns:
+	- Distance in kilometers.
+	"""
+	# Radius of the Earth in kilometers
+	R = 6371.0
+
+	# Convert latitude and longitude from degrees to radians
+	lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
+	lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
+
+	# Differences in coordinates
+	dlat = lat2 - lat1
+	dlon = lon2 - lon1
+
+	# Haversine formula
+	a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+	c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+	# Distance in kilometers
+	distance = R * c
+
+	return distance
+
 
 def main():
-    return AlabamaGO()
+	return AlabamaGO()
