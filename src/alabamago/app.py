@@ -45,7 +45,7 @@ class AlabamaGO(toga.App):
 		)
 
 	def search_nearby(self, widget):
-		self.list_box.parent.remove(self.list_box)
+		self.main_box.remove(self.list_box)
 		lat, long = self.get_location()
 		nearby = self.get_nearby_monuments((lat, long))
 		self.list_box = self.create_list_box(nearby)
@@ -56,8 +56,9 @@ class AlabamaGO(toga.App):
 			data = [
 				{
 					"icon": toga.Icon("resources/bama.png"),
-					"title": monument["dist"],
-					"subtitle": monument["dist"]
+					"title": monument["data"][2],
+					"subtitle": str(monument["dist"]) + " km",
+					"id": monument["data"][0]
 				}
 				for monument in monuments
 			],
@@ -67,9 +68,51 @@ class AlabamaGO(toga.App):
 		return list_box
 	
 	def on_select_handler(self, widget):
-		pass
+		row = widget.selection
+		print(getattr(row, "title", ""))
+		details = self.get_monument_id(getattr(row, "id"))
+		self.create_detail_page(details)
+        # self.label.text = (
+        #     f"Bee is {getattr(row, 'title', '')} in {getattr(row, 'subtitle', '')}"
+        #     if row is not None
+        #     else "No row selected"
+        # )
+
+	def create_detail_page(self, row):
+		back_button = toga.Button("< Back", on_press=self.main_page)
+		detail_label = toga.Label(
+			row[2],
+			style=Pack(padding=(5, 5))
+		)
+		f = open(os.path.join(toga.App.app.paths.app, ".env"), "r")
+		google_key = f.read().strip()
+		geoview = toga.WebView(
+			url=f"https://maps.googleapis.com/maps/api/staticmap?center={row[7]},{row[8]}&markers={row[7]},{row[8]}&zoom=19&size=380x315&key={google_key}",
+			style=Pack(flex=1),
+		)
+		image_view = toga.WebView(
+			url=row[16],
+			style=Pack(flex=1),
+		)
+		scan_view = toga.WebView(
+			url="https://shielded-harbor-81806-544e6cbb1d40.herokuapp.com/scan/123456",
+			style=Pack(height=70),
+		)
+		border = toga.Box(
+			style=Pack(height=20, background_color="gray")
+		)
+		self.main_box = toga.Box(
+			style=Pack(direction=COLUMN),
+			children=[back_button, image_view, border, geoview, scan_view]
+		)
+		self.main_window = toga.MainWindow(title=self.formal_name)
+		self.main_window.content = self.main_box
+		self.main_window.show()
 
 	def startup(self):
+		self.main_page(None)
+
+	def main_page(self, _):
 		self.logo_box = self.create_logo_box()
 		self.search_box = self.create_search_button()
 		self.list_box = toga.Box()
@@ -81,6 +124,10 @@ class AlabamaGO(toga.App):
 		self.main_window = toga.MainWindow(title=self.formal_name)
 		self.main_window.content = self.main_box
 		self.main_window.show()
+
+	def back_to_main_page(self, _):
+		self.main_page(None)
+		self.search_nearby(None)
 
 	def get_location(self):
 		url = 'https://ipinfo.io/json'
@@ -116,6 +163,15 @@ class AlabamaGO(toga.App):
 			smallest_numbers = dist_list[:limit]
 			print(smallest_numbers)
 			return smallest_numbers
+		
+	def get_monument_id(self, id):
+		monument_file = os.path.join(toga.App.app.paths.app, "monuments.csv")
+		with open(monument_file, 'r') as csvfile:
+			csvreader = csv.reader(csvfile)
+			next(csvreader)
+			for row in csvreader:
+				if row[0] == id:
+					return row
 		
 def haversine_distance(coord1, coord2):
 	"""
