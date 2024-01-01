@@ -21,13 +21,13 @@ class AlabamaGO(toga.App):
 				direction=COLUMN,
 			)
 		)
-		image_from_path = toga.Image("resources/bama.png")
+		image_from_path = toga.Image("resources/alabama_go_logo.png")
 		box.add(
 			toga.ImageView(
 				image_from_path,
 				style=Pack(
-					width=50,
-					height=50
+					width=187.5,
+					height=105.46875
 				)
 			)
 		)
@@ -52,10 +52,12 @@ class AlabamaGO(toga.App):
 		self.main_box.add(self.list_box)
 
 	def create_list_box(self, monuments):
+		for monument in monuments:
+			monument["dist"] = round(monument["dist"], 2)
 		list_box = toga.DetailedList(
 			data = [
 				{
-					"icon": toga.Icon("resources/bama.png"),
+					"icon": toga.Icon("resources/staticmap.png"),
 					"title": monument["data"][2],
 					"subtitle": str(monument["dist"]) + " km",
 					"id": monument["data"][0]
@@ -79,11 +81,7 @@ class AlabamaGO(toga.App):
         # )
 
 	def create_detail_page(self, row):
-		back_button = toga.Button("< Back", on_press=self.main_page)
-		detail_label = toga.Label(
-			row[2],
-			style=Pack(padding=(5, 5))
-		)
+		back_button = toga.Button("< Back", on_press=self.main_page, style=Pack(flex=1, padding_right=500, padding_left=10))
 		f = open(os.path.join(toga.App.app.paths.app, ".env"), "r")
 		google_key = f.read().strip()
 		geoview = toga.WebView(
@@ -95,7 +93,7 @@ class AlabamaGO(toga.App):
 			style=Pack(flex=1),
 		)
 		scan_view = toga.WebView(
-			url="https://shielded-harbor-81806-544e6cbb1d40.herokuapp.com/scan/123456",
+			url=f"https://shielded-harbor-81806-544e6cbb1d40.herokuapp.com/scan/{row[0]}",
 			style=Pack(height=70),
 		)
 		border = toga.Box(
