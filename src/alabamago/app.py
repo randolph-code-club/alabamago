@@ -142,15 +142,16 @@ class AlabamaGO(toga.App):
 		details = self.get_monument_id(getattr(row, "id"))
 		self.current_row = details
 		back_button = toga.Button("< Back", on_press=self.history_page, style=Pack(flex=1, padding_right=500, padding_left=10))
-		title = toga.Label(f"{details[2]}", style=Pack(flex=1, padding=10, font_size=30, text_align=CENTER))
+		title = toga.Label(f"{details[2]}", style=Pack(flex=1, padding=10, font_weight="bold", text_align=CENTER))
+		scan_time = toga.Label(f"Scanned on {getattr(row, 'subtitle')}", style=Pack(flex=1, padding=10, text_align=CENTER))
 		scan_view = toga.WebView(
 			url=f"https://shielded-harbor-81806-544e6cbb1d40.herokuapp.com/scan/{details[0]}",
 			style=Pack(flex=1)
 		)
-		detail_link = toga.Button("Details", on_press=self.on_history_detail_link, style=Pack(flex=1, padding=5))
+		detail_link = toga.Button("Details", on_press=self.on_history_detail_link, style=Pack(flex=1, padding=15, padding_bottom=30))
 		self.main_box = toga.Box(
 			style=Pack(direction=COLUMN),
-			children=[back_button, title, scan_view, detail_link]
+			children=[back_button, title, scan_time, scan_view, detail_link]
 		)
 
 		self.main_window = toga.MainWindow(title=self.formal_name)
