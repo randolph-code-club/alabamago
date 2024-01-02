@@ -11,8 +11,6 @@ from toga.style import Pack
 from toga.style.pack import COLUMN, ROW, CENTER
 from datetime import datetime
 
-scans = []
-
 class AlabamaGO(toga.App):
 
 	def create_logo_box(self):
@@ -82,14 +80,13 @@ class AlabamaGO(toga.App):
         #     else "No row selected"
         # )
 
-	def save_scan(self, row):
-		scans.append({
-			"id": row[0],
-			"datetime": datetime.utcnow()
-		})
+	# def save_scan(self, row):
+	# 	scans.append({
+	# 		"id": row[0],
+	# 		"datetime": datetime.utcnow()
+	# 	})
 
 	def create_detail_page(self, row):
-		self.save_scan(row)
 		back_button = toga.Button("< Back", on_press=self.main_page, style=Pack(flex=1, padding_right=500, padding_left=10))
 		f = open(os.path.join(toga.App.app.paths.app, ".env"), "r")
 		google_key = f.read().strip()
@@ -158,6 +155,7 @@ class AlabamaGO(toga.App):
 	def history_page(self, _):
 		back_button = toga.Button("< Back", on_press=self.main_page, style=Pack(flex=1, padding_right=500, padding_left=10))
 		title = toga.Label("Your History", style=Pack(flex=1, padding=10, font_size=30, text_align=CENTER))
+		scans = self.get_scans()
 		if len(scans) == 0:
 			detail_list = toga.Label("You have no scans. Go search and scan stuff!", style=Pack(flex=1, padding=10, text_align=CENTER))
 		else:
@@ -190,6 +188,13 @@ class AlabamaGO(toga.App):
 		data = json.load(response)
 		parts = data["loc"].split(",")
 		return (float(parts[0]), float(parts[1]))
+	
+	def get_scans(self):
+		url = "http://shielded-harbor-81806-544e6cbb1d40.herokuapp.com/scans"
+		request = urllib.request.Request(url)
+		response = urllib.request.urlopen(request)
+		data = json.load(response)
+		return data
 	
 	# def say_hello(self, widget):
 	# 	lat, long = self.get_location()
