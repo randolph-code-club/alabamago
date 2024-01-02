@@ -9,7 +9,9 @@ import csv
 import os
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW, CENTER
+from datetime import datetime
 
+scans = []
 
 class AlabamaGO(toga.App):
 
@@ -57,7 +59,7 @@ class AlabamaGO(toga.App):
 		list_box = toga.DetailedList(
 			data = [
 				{
-					"icon": toga.Icon("resources/staticmap.png"),
+					"icon": toga.Icon(f"resources/icons/map_icon_{monument['data'][0]}.png"),
 					"title": monument["data"][2],
 					"subtitle": str(monument["dist"]) + " km",
 					"id": monument["data"][0]
@@ -80,7 +82,14 @@ class AlabamaGO(toga.App):
         #     else "No row selected"
         # )
 
+	def save_scan(self, row):
+		scans.append({
+			"id": row[0],
+			"datetime": datetime.utcnow()
+		})
+
 	def create_detail_page(self, row):
+		self.save_scan(row)
 		back_button = toga.Button("< Back", on_press=self.main_page, style=Pack(flex=1, padding_right=500, padding_left=10))
 		f = open(os.path.join(toga.App.app.paths.app, ".env"), "r")
 		google_key = f.read().strip()
@@ -111,12 +120,13 @@ class AlabamaGO(toga.App):
 		self.main_page(None)
 
 	def main_page(self, _):
+		history_button = toga.Button("📖", on_press=self.history_page, style=Pack(flex=1, padding_right=500, padding_left=30, font_size=20))
 		self.logo_box = self.create_logo_box()
 		self.search_box = self.create_search_button()
 		self.list_box = toga.Box()
 		self.main_box = toga.Box(
 			style=Pack(direction=COLUMN),
-			children=[self.logo_box, self.search_box, self.list_box]
+			children=[history_button, self.logo_box, self.search_box, self.list_box]
 		)
 
 		self.main_window = toga.MainWindow(title=self.formal_name)
@@ -127,8 +137,36 @@ class AlabamaGO(toga.App):
 		self.main_page(None)
 		self.search_nearby(None)
 
+	def history_page(self, _):
+		back_button = toga.Button("< Back", on_press=self.main_page, style=Pack(flex=1, padding_right=500, padding_left=10))
+		title = toga.Label("Your History", style=Pack(flex=1, padding=10, font_size=30, text_align=CENTER))
+		if len(scans) == 0:
+			detail_list = toga.Label("You have no scans. Go search and scan stuff!", style=Pack(flex=1, padding=10, text_align=CENTER))
+		else:
+			detail_list = toga.DetailedList(
+			data = [
+				{
+					"icon": toga.Icon(f"resources/icons/map_icon_{scan['id']}.png"),
+					"title": self.get_monument_id(scan["id"])[2],
+					"subtitle": scan["datetime"],
+					"id": scan["id"]
+				}
+				for scan in scans
+			],
+			on_select=self.on_select_handler,
+			style=Pack(flex=1)
+		)
+		self.main_box = toga.Box(
+			style=Pack(direction=COLUMN),
+			children=[back_button, title, detail_list]
+		)
+
+		self.main_window = toga.MainWindow(title=self.formal_name)
+		self.main_window.content = self.main_box
+		self.main_window.show()	
+
 	def get_location(self):
-		url = 'https://ipinfo.io/json'
+		url = 'http://ipinfo.io/json'
 		request = urllib.request.Request(url)
 		response = urllib.request.urlopen(request)
 		data = json.load(response)
