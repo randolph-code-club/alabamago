@@ -134,18 +134,23 @@ class AlabamaGO(toga.App):
 		self.main_page(None)
 		self.search_nearby(None)
 
+	def on_history_detail_link(self, _):
+		self.create_detail_page(self.current_row)
+
 	def create_history_detail_page(self, widget):
 		row = widget.selection
 		details = self.get_monument_id(getattr(row, "id"))
+		self.current_row = details
 		back_button = toga.Button("< Back", on_press=self.history_page, style=Pack(flex=1, padding_right=500, padding_left=10))
 		title = toga.Label(f"{details[2]}", style=Pack(flex=1, padding=10, font_size=30, text_align=CENTER))
 		scan_view = toga.WebView(
 			url=f"https://shielded-harbor-81806-544e6cbb1d40.herokuapp.com/scan/{details[0]}",
 			style=Pack(flex=1)
 		)
+		detail_link = toga.Button("Details", on_press=self.on_history_detail_link, style=Pack(flex=1, padding=5))
 		self.main_box = toga.Box(
 			style=Pack(direction=COLUMN),
-			children=[back_button, title, scan_view]
+			children=[back_button, title, scan_view, detail_link]
 		)
 
 		self.main_window = toga.MainWindow(title=self.formal_name)
@@ -154,7 +159,7 @@ class AlabamaGO(toga.App):
 
 	def history_page(self, _):
 		back_button = toga.Button("< Back", on_press=self.main_page, style=Pack(flex=1, padding_right=500, padding_left=10))
-		title = toga.Label("Your History", style=Pack(flex=1, padding=10, font_size=30, text_align=CENTER))
+		title = toga.Label("Your Scans", style=Pack(flex=1, padding=10, font_size=30, text_align=CENTER))
 		scans = self.get_scans()
 		if len(scans) == 0:
 			detail_list = toga.Label("You have no scans. Go search and scan stuff!", style=Pack(flex=1, padding=10, text_align=CENTER))
